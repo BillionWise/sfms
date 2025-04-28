@@ -9,18 +9,21 @@ public abstract class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String username;
+
     private String password;
 
-    public User() {
-    }
+    // ✅ Default constructor (required by JPA)
+    public User() {}
 
+    // ✅ Constructor with username and password
     public User(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
-    // Getters and setters
+    // ✅ Getters and Setters
     public Long getId() {
         return id;
     }

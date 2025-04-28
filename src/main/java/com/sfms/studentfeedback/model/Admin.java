@@ -5,16 +5,11 @@ import jakarta.persistence.Entity;
 @Entity
 public class Admin extends User {
 
-    private String role = "ADMIN";  // optional field
-
     public Admin() {
+        super(); // ✅ Call User's no-arg constructor
     }
 
     public Admin(String username, String password) {
-        super(username, password);
-    }
-
-    public String getRole() {
-        return role;
+        super(username, password); // ✅ Call User's constructor with username + password
     }
 }
