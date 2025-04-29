@@ -6,22 +6,14 @@ import com.sfms.studentfeedback.model.Student;
 import com.sfms.studentfeedback.model.User;
 import com.sfms.studentfeedback.repository.AdminRepository;
 import com.sfms.studentfeedback.repository.StudentRepository;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
-
-
-import java.util.ArrayList;
-import java.util.Optional;
-
 @Service
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private final StudentRepository studentRepo;
     private final AdminRepository adminRepo;
@@ -34,7 +26,6 @@ public class UserService implements UserDetailsService {
     }
 
     public void registerUser(String userType, String username, String password) {
-        // ✅ Encrypt the password before saving
         String hashedPassword = passwordEncoder.encode(password);
         User user = UserFactory.createUser(userType, username, hashedPassword);
 
@@ -45,54 +36,24 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public String loginUser(String userType, String username, String password) {
+    public String loginUser(String username, String password, String userType) {
         if ("student".equalsIgnoreCase(userType)) {
-            Optional<Student> studentOpt = studentRepo.findByUsername(username);
-            if (studentOpt.isEmpty()) return "User not found!";
+            Student student = studentRepo.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            Student student = studentOpt.get();
-            if (!passwordEncoder.matches(password, student.getPassword())) return "Incorrect password!";
-
+            if (!passwordEncoder.matches(password, student.getPassword())) {
+                return "Incorrect password!";
+            }
             return "Login successful!";
         } else if ("admin".equalsIgnoreCase(userType)) {
-            Optional<Admin> adminOpt = adminRepo.findByUsername(username);
-            if (adminOpt.isEmpty()) return "User not found!";
+            Admin admin = adminRepo.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            Admin admin = adminOpt.get();
-            if (!passwordEncoder.matches(password, admin.getPassword())) return "Incorrect password!";
-
+            if (!passwordEncoder.matches(password, admin.getPassword())) {
+                return "Incorrect password!";
+            }
             return "Login successful!";
         }
-
         return "User type mismatch!";
     }
-
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Try student first
-        Optional<Student> studentOpt = studentRepo.findByUsername(username);
-        if (studentOpt.isPresent()) {
-            Student student = studentOpt.get();
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(student.getUsername())
-                    .password(student.getPassword())
-                    .authorities(student.getRole())    // grants ROLE_STUDENT
-                    .build();
-        }
-
-        // Then admin
-        Optional<Admin> adminOpt = adminRepo.findByUsername(username);
-        if (adminOpt.isPresent()) {
-            Admin admin = adminOpt.get();
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(admin.getUsername())
-                    .password(admin.getPassword())
-                    .authorities(admin.getRole())      // grants ROLE_ADMIN
-                    .build();
-        }
-
-        throw new UsernameNotFoundException("User not found");
-    }
-
 }

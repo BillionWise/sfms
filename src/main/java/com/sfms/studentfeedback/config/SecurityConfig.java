@@ -1,28 +1,31 @@
 package com.sfms.studentfeedback.config;
 
-import com.sfms.studentfeedback.service.UserService;
+import com.sfms.studentfeedback.security.JwtAuthenticationFilter;
+import com.sfms.studentfeedback.security.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserService userService;
+    private final JwtAuthenticationFilter jwtFilter;
+    private final CustomUserDetailsService userDetailsService;
 
-    // ✅ Break circular dependency with @Lazy
-    public SecurityConfig(@Lazy UserService userService) {
-        this.userService = userService;
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter, CustomUserDetailsService userDetailsService) {
+        this.jwtFilter = jwtFilter;
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
@@ -33,7 +36,7 @@ public class SecurityConfig {
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userService);
+        provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
@@ -44,23 +47,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
                         .requestMatchers(HttpMethod.POST, "/api/users/register", "/api/users/login").permitAll()
-
-                        // Only STUDENT can submit feedback
-                        .requestMatchers(HttpMethod.POST, "/api/feedbacks/submit").hasRole("STUDENT")
-
-                        // Only ADMIN can view all feedback
-                        .requestMatchers(HttpMethod.GET, "/api/feedbacks/all").hasRole("ADMIN")
-
-                        // All other endpoints require authentication
+                        .requestMatchers(HttpMethod.POST, "/api/feedbacks/submit").hasRole("STUDENT")  // hasRole("ROLE_STUDENT") equivalent
+                        .requestMatchers(HttpMethod.GET, "/api/feedbacks/all").hasRole("ADMIN")      // hasRole("ROLE_ADMIN") equivalent
                         .anyRequest().authenticated()
                 )
-                .csrf(csrf -> csrf.disable()) // You can configure CSRF later
-                .authenticationProvider(authenticationProvider());
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
