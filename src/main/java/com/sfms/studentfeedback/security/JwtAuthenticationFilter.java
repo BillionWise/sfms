@@ -1,20 +1,22 @@
 package com.sfms.studentfeedback.security;
 
-import com.sfms.studentfeedback.security.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
@@ -28,6 +30,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest req,
                                     HttpServletResponse res,
                                     FilterChain filterChain) throws ServletException, IOException {
+//        testing
+//        System.out.println("⛳ JwtAuthenticationFilter triggered on: " + req.getRequestURI());
+
 
         String authHeader = req.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -42,12 +47,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String username = jwtUtil.extractUsername(token);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        String roleClaim = jwtUtil.extractRole(token);               // e.g. "ROLE_STUDENT"
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Load the rest of the user details (e.g. password isn’t really used now)
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        var authToken = new UsernamePasswordAuthenticationToken(
-                userDetails, null, userDetails.getAuthorities()
-        );
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+            // **Here’s the key: grant exactly the authority from the token**
+            var authorities = Collections.singletonList((GrantedAuthority) () -> roleClaim);
+
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+            System.out.println("✅ Authenticated user=" + username + " with " + roleClaim);
+
+        }
 
         filterChain.doFilter(req, res);
     }

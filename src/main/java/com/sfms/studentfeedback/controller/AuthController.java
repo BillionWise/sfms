@@ -32,13 +32,16 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@RequestBody UserLoginRequest request) {
-        // Authenticate user credentials
+        // 1. Authenticate user credentials
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        // Generate JWT
-        String token = jwtUtil.generateToken(request.getUsername(), request.getUserType().toUpperCase());
+        // 2. Generate token (prefixing ROLE_ for clarity)
+        String role = request.getUserType().toUpperCase();
+        String token = jwtUtil.generateToken(request.getUsername(), role);
+
+        // 3. Return token in response
         return ResponseEntity.ok(new JwtResponse(token));
     }
 }

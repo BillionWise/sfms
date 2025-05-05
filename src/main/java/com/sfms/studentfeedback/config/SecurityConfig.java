@@ -53,8 +53,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/users/register", "/api/users/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/feedbacks/submit").hasRole("STUDENT")  // hasRole("ROLE_STUDENT") equivalent
-                        .requestMatchers(HttpMethod.GET, "/api/feedbacks/all").hasRole("ADMIN")      // hasRole("ROLE_ADMIN") equivalent
+                        .requestMatchers(HttpMethod.POST, "/api/feedbacks/submit").hasRole("STUDENT")
+                        .requestMatchers(HttpMethod.GET, "/api/feedbacks/all").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

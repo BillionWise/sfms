@@ -13,7 +13,6 @@ public class Feedback {
     private String course;
     private String comment;
 
-    // Constructors
     public Feedback() {}
 
     public Feedback(String studentName, String course, String comment) {
@@ -22,32 +21,11 @@ public class Feedback {
         this.comment = comment;
     }
 
-    // Getters and setters
-    public Long getId() {
-        return id;
-    }
-
-    public String getStudentName() {
-        return studentName;
-    }
-
-    public void setStudentName(String studentName) {
-        this.studentName = studentName;
-    }
-
-    public String getCourse() {
-        return course;
-    }
-
-    public void setCourse(String course) {
-        this.course = course;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
+    public Long getId() { return id; }
+    public String getStudentName() { return studentName; }
+    public void setStudentName(String studentName) { this.studentName = studentName; }
+    public String getCourse() { return course; }
+    public void setCourse(String course) { this.course = course; }
+    public String getComment() { return comment; }
+    public void setComment(String comment) { this.comment = comment; }
 }
