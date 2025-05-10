@@ -1,5 +1,9 @@
 package com.sfms.studentfeedback.config;
 
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import com.sfms.studentfeedback.security.JwtAuthenticationFilter;
 import com.sfms.studentfeedback.security.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
@@ -49,17 +53,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configure(http)) // Enable CORS
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/users/register", "/api/users/login").permitAll()
+                        .requestMatchers("/dashboard").authenticated()  // Require authentication for /dashboard
+                        .requestMatchers("/feedback/form").authenticated() // Protect the feedback form page
                         .requestMatchers(HttpMethod.POST, "/api/feedbacks/submit").hasRole("STUDENT")
-                        .requestMatchers(HttpMethod.GET, "/api/feedbacks/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/feedbacks/filter").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/feedbacks/all").hasAnyRole("ADMIN", "STUDENT")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.addAllowedOrigin("*"); // Allows all origins (OK for development)
+        config.addAllowedMethod("*"); // Allows all HTTP methods
+        config.addAllowedHeader("*"); // Allows all headers
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

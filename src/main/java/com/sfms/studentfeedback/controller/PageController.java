@@ -17,7 +17,7 @@ public class PageController {
 
     @GetMapping("/feedback/form")
     public String showFeedbackForm() {
-        return "submit_feedback";  // Looks for submit_feedback.html in templates
+        return "submit_feedback";
     }
 
     @GetMapping("/feedbacks")
@@ -25,5 +25,17 @@ public class PageController {
         List<Feedback> feedbackList = feedbackService.getAllFeedbacks();
         model.addAttribute("feedbacks", feedbackList);
         return "view_feedbacks";
+    }
+
+    // ✅ Serve the login page (e.g. http://localhost:8000/login)
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login"; // Looks for login.html in templates
+    }
+
+    // ✅ Serve the dashboard page after login
+    @GetMapping("/dashboard")
+    public String dashboardPage() {
+        return "dashboard"; // Looks for dashboard.html in templates
     }
 }

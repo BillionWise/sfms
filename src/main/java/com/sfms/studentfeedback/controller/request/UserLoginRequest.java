@@ -5,6 +5,9 @@ public class UserLoginRequest {
     private String password;
     private String userType;
 
+    public UserLoginRequest(String testuser, String testpass, String student) {
+    }
+
     // Getters and Setters
     public String getUsername() {
         return username;
